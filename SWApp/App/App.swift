@@ -26,7 +26,7 @@ struct MainApp {
 struct SWApp: App {
     var body: some Scene {
         WindowGroup {
-            ContentView() // Add another view with content Text("From iOS 14+") to test both block runs
+            CategoriesView() // Add another view with content Text("From iOS 14+") to test both block runs
         }
     }
 }

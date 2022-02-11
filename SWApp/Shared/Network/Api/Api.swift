@@ -17,6 +17,37 @@ final class Api {
         self.requestBuilder = requestBuilder
     }
 
+    func listPeople<ApiError: DataError>() -> AnyPublisher<[People], ApiError> {
+        return httpClient
+            .dataTask(for: requestBuilder.build(service: PeopleService.list()))
+            .tryMap({ (data, response) in
+                let httpResponse = response as? HTTPURLResponse
+                if httpResponse?.isSuccess ?? false {
+                    return data
+                }
+                throw ApiError(statusCode: httpResponse?.statusCode, data: data)
+            })
+            .decode(type: PageableCodable<PeopleCodable>.self, decoder: JSONDecoder())
+            .map { $0.results.map{ PeopleMapper.map($0) }}
+            .mapError { self.mapError(error: $0) }
+            .eraseToAnyPublisher()
+    }
+
+    func getPeople<ApiError: DataError>(id: Int) -> AnyPublisher<People, ApiError> {
+        return httpClient
+            .dataTask(for: requestBuilder.build(service: PeopleService.single(id: id)))
+            .tryMap { (data, response) in
+                let httpResponse = response as? HTTPURLResponse
+                if httpResponse?.isSuccess ?? false {
+                    return data
+                }
+                throw ApiError(statusCode: httpResponse?.statusCode, data: data)
+            }
+            .decode(type: PeopleCodable.self, decoder: JSONDecoder())
+            .map { PeopleMapper.map($0) }
+            .mapError { self.mapError(error: $0) }
+            .eraseToAnyPublisher()
+    }
 }
 
 private extension Api {
